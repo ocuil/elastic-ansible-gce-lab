@@ -46,7 +46,7 @@ follows:
 Once those dependencies have been installed, clone the repository and enter the
 directory:
 
-    git clone https://SERVER/compute-ansible-lab
+    git clone https://github.com/ocuil/elastic-ansible-gce-lab
     cd compute-ansible-lab
 
 # Cluster Configuration
