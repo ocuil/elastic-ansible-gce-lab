@@ -47,7 +47,7 @@ Once those dependencies have been installed, clone the repository and enter the
 directory:
 
     git clone https://github.com/ocuil/elastic-ansible-gce-lab
-    cd compute-ansible-lab
+    cd elastic-ansible-gce-lab
 
 # Cluster Configuration
 
