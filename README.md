@@ -100,7 +100,7 @@ running the Ansible playbook as follows:
 Make a reference with https://github.com/elastic/rally
 
 
-# Destroying your cluster and clients
+# Destroying your cluster
 
 You can use the Ansible playbooks to turn down your machines by running the
 following:
