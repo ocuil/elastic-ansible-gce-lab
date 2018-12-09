@@ -1,6 +1,4 @@
-- name: Download elastic 6.5.2
-  command: "wget -q -O {{elastic_rpm}} {{download_url}}"
-- name: Install elastic
-  shell: yum -y localinstall {{elastic_rpm}}
+- name: Download and install elastic 6.5.2
+  command: rpm -i {{download_url}}
 - name: start and enable elastic service
   service: name=elasticsearch enabled=yes state=started

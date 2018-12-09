@@ -1,0 +1,13 @@
+- name: copy local java to the server
+  copy:
+    src: files/jdk-8u191-linux-x64.rpm
+    dest: /opt/jdk-8u191-linux-x64.rpm
+    owner: root
+    group: root
+    mode: 0644
+
+- name: install java
+  command: rpm -i /opt/jdk-8u191-linux-x64.rpm
+
+- name: delete java rpm
+  command: rm -rf /opt/jdk-8u191-linux-x64.rpm

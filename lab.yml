@@ -7,21 +7,21 @@
     machine_type: n1-standard-1
     elastic_hosts:
       - elastic01
-      - elastic02
-      - elastic03
+#      - elastic02
+#      - elastic03
     kibana_host:
       - kibana01
     logstash_hosts:
       - logstash01
-      - logstash02
+#      - logstash02
     zookeeper_hosts:
       - zookeeper01
-      - zookeeper02
-      - zookeeper03
+#      - zookeeper02
+#      - zookeeper03
     kafka_hosts:
       - kafka01
-      - kafka02
-      - kafka03
+ #     - kafka02
+ #     - kafka03
     beat_hosts:
       - beat01
     elk_disk_type: pd-ssd
@@ -57,93 +57,95 @@
           mode: READ_WRITE
           state: "{{ state }}"
       with_items: "{{elastic_hosts}}"
-####################
-# KIBANA NODES
-####################
-    - name: Launch kibana instances
-      gce:
-          instance_names: "{{ kibana_host|join(',') }}"
-          machine_type: "{{ machine_type }}"
-          image: centos-7
-          tags: kibana
-          zone: "{{ zone }}-b"
-          state: "{{ state }}"
-      register: gce
 
-    - name: Add kibana hosts to elastic group
-      add_host: hostname={{ item.public_ip }} groupname=elastic
-      with_items: "{{gce.instance_data | default({})}}"
-####################
-# LOGSTASH NODES
-####################
-    - name: Launch logstash instances
-      gce:
-          instance_names: "{{ logstash_hosts|join(',') }}"
-          machine_type: "{{ machine_type }}"
-          image: centos-7
-          tags: logstash
-          zone: "{{ zone }}-b"
-          state: "{{ state }}"
-      register: gce
-
-    - name: Add logstash hosts to elastic group
-      add_host: hostname={{ item.public_ip }} groupname=elastic
-      with_items: "{{gce.instance_data | default({})}}"
-####################
-# ZOOKEEPER NODES
-####################
-    - name: Launch ZooKeeper instances
-      gce:
-          instance_names: "{{ zookeeper_hosts|join(',') }}"
-          machine_type: "{{ machine_type }}"
-          image: centos-7
-          tags: zookeeper
-          zone: "{{ zone }}-b"
-          state: "{{ state }}"
-      register: gce
-
-    - name: Add Zookeeper hosts to elastic group
-      add_host: hostname={{ item.public_ip }} groupname=elastic
-      with_items: "{{gce.instance_data | default({})}}"
-####################
-# KAFKA NODES
-####################
-    - name: Launch Kafka instances
-      gce:
-          instance_names: "{{ kafka_hosts|join(',') }}"
-          machine_type: "{{ machine_type }}"
-          image: centos-7
-          tags: kafka
-          zone: "{{ zone }}-b"
-          state: "{{ state }}"
-      register: gce
-
-    - name: Add kafka hosts to elastic group
-      add_host: hostname={{ item.public_ip }} groupname=elastic
-      with_items: "{{gce.instance_data | default({})}}"
-####################
-# BEATS NODES
-####################
-    - name: Launch Beats instances
-      gce:
-          instance_names: "{{ beat_hosts|join(',') }}"
-          machine_type: "{{ machine_type }}"
-          image: centos-7
-          tags: beats
-          zone: "{{ zone }}-b"
-          state: "{{ state }}"
-      register: gce
-
-    - name: Add beat host to elastic group
-      add_host: hostname={{ item.public_ip }} groupname=elastic
-      with_items: "{{gce.instance_data | default({})}}"
-####################
-####################
-
-    - name: Wait for SSH to come up
+    - name: Wait for SSH to come up on elastic cluster
       wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
       with_items: "{{gce.instance_data | default({})}}"
       when: gce.instance_data is defined
+
+# ####################
+# # KIBANA NODES
+# ####################
+#     - name: Launch kibana instances
+#       gce:
+#           instance_names: "{{ kibana_host|join(',') }}"
+#           machine_type: "{{ machine_type }}"
+#           image: centos-7
+#           tags: kibana
+#           zone: "{{ zone }}-b"
+#           state: "{{ state }}"
+#       register: gce
+
+#     - name: Add kibana hosts to kibana group
+#       add_host: hostname={{ item.public_ip }} groupname=kibana
+#       with_items: "{{gce.instance_data | default({})}}"
+# ####################
+# # LOGSTASH NODES
+# ####################
+#     - name: Launch logstash instances
+#       gce:
+#           instance_names: "{{ logstash_hosts|join(',') }}"
+#           machine_type: "{{ machine_type }}"
+#           image: centos-7
+#           tags: logstash
+#           zone: "{{ zone }}-b"
+#           state: "{{ state }}"
+#       register: gce
+
+#     - name: Add logstash hosts to logstash group
+#       add_host: hostname={{ item.public_ip }} groupname=logstash
+#       with_items: "{{gce.instance_data | default({})}}"
+# ####################
+# # ZOOKEEPER NODES
+# ####################
+#     - name: Launch ZooKeeper instances
+#       gce:
+#           instance_names: "{{ zookeeper_hosts|join(',') }}"
+#           machine_type: "{{ machine_type }}"
+#           image: centos-7
+#           tags: zookeeper
+#           zone: "{{ zone }}-b"
+#           state: "{{ state }}"
+#       register: gce
+
+#     - name: Add Zookeeper hosts to zookeeper group
+#       add_host: hostname={{ item.public_ip }} groupname=zookeeper
+#       with_items: "{{gce.instance_data | default({})}}"
+# ####################
+# # KAFKA NODES
+# ####################
+#     - name: Launch Kafka instances
+#       gce:
+#           instance_names: "{{ kafka_hosts|join(',') }}"
+#           machine_type: "{{ machine_type }}"
+#           image: centos-7
+#           tags: kafka
+#           zone: "{{ zone }}-b"
+#           state: "{{ state }}"
+#       register: gce
+
+#     - name: Add kafka hosts to kafka group
+#       add_host: hostname={{ item.public_ip }} groupname=kafka
+#       with_items: "{{gce.instance_data | default({})}}"
+# ####################
+# # BEATS NODES
+# ####################
+#     - name: Launch Beats instances
+#       gce:
+#           instance_names: "{{ beat_hosts|join(',') }}"
+#           machine_type: "{{ machine_type }}"
+#           image: centos-7
+#           tags: beats
+#           zone: "{{ zone }}-b"
+#           state: "{{ state }}"
+#       register: gce
+
+#     - name: Add beat host to beats group
+#       add_host: hostname={{ item.public_ip }} groupname=beats
+#       with_items: "{{gce.instance_data | default({})}}"
+# ####################
+# ####################
+
 
 ####################
 # ELASTICSEARCH NODES
@@ -162,10 +164,6 @@
     volumes:
     - name: data
       type: ""
-      hosts:
-        - elastic01
-        - elastic02
-        - elastic03
     mount_point: /data
   roles:
     - install_dependencies
