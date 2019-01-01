@@ -1,0 +1,5 @@
+cluster: gce_lab
+kibana: kibana
+kibana_folder: /etc/kibana
+pem: files/server.pem
+key: files/server.key

@@ -1,0 +1,47 @@
+- name: Ensure kibana is installed
+  package:
+    name: "kibana"
+    state: present
+
+- name: create cert folder
+  file:
+    path: "{{kibana_folder}}/certs"
+    state: directory
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: "u=rwx,g=rsx,o=r"
+
+- name: create log folder
+  file:
+    path: "/var/log/kibana"
+    state: directory
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: "u=rwx,g=rsx,o=r"
+
+- name: setup kibana node
+  template:
+    src: templates/kibana.yml.j2
+    dest: "{{kibana_folder}}/kibana.yml"
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: "u=rw,g=r,o=r"
+
+- name: upload pem
+  copy:
+    src: "{{pem}}"
+    dest: "{{kibana_folder}}/certs/"
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: 0600
+
+- name: upload key
+  copy:
+    src: "{{key}}"
+    dest: "{{kibana_folder}}/certs/"
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: 0600
+
+- name: start and enable kibana service
+  service: name=kibana enabled=yes state=started

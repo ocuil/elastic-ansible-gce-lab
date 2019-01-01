@@ -1,0 +1,19 @@
+sysctl:
+- name: vm.dirty_ratio
+  value: 5
+- name: vm.dirty_background_ratio
+  value: 2
+- name: vm.swappiness
+  value: 1
+data_folder: /data
+elastic_folder: /etc/elasticsearch
+user_group: elasticsearch
+certs: files/elastic-certificates.p12
+cluster: gce_lab
+keystore_md5: files/.elasticsearch.keystore.initial_md5sum
+keystore: files/elasticsearch.keystore
+jvmOps: files/jvm.options
+limits: files/limits.conf
+limits_folder: /etc/security/
+elastic_service: files/elasticsearch.service
+elastic_service_folder: /usr/lib/systemd/system/

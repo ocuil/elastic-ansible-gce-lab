@@ -1,0 +1,27 @@
+cluster.name: {{ cluster }}
+node.name: ${HOSTNAME}
+
+path.data: {{ data_folder }}
+path.logs: /var/log/elasticsearch
+
+bootstrap.memory_lock: true
+network.host: 0.0.0.0
+
+discovery.zen.ping.unicast.hosts: ["elastic01", "elastic02", "elastic03"]
+discovery.zen.minimum_master_nodes: 2
+
+xpack.security.enabled: true
+xpack.monitoring.enabled: true
+
+xpack.monitoring.exporters.{{ cluster }}:
+  type: http
+  host: ['http://esmonit01']
+  auth.username: elastic
+  auth.password: "top-secret"
+
+xpack.monitoring.collection.enabled: true
+
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate 
+xpack.security.transport.ssl.keystore.path: certs/elastic-certificates.p12 
+xpack.security.transport.ssl.truststore.path: certs/elastic-certificates.p12 

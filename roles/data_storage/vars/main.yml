@@ -1,0 +1,5 @@
+device: /dev/sdb
+volumes:
+- name: data
+  type: ""
+mount_point: /data

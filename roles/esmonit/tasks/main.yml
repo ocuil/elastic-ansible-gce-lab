@@ -1,0 +1,168 @@
+- name: Ensure Java is installed.
+  package:
+    name: "java-1.8.0-openjdk"
+    state: present
+
+- name: Ensure elasticsearch is installed
+  package:
+    name: "elasticsearch"
+    state: present
+
+- name: start and enable elastic service
+  service: name=elasticsearch enabled=yes state=started
+
+- name: Set sysctl parameters
+  sysctl: name={{item.name}} value={{item.value}} state=present sysctl_set=yes reload=yes
+  with_items: "{{sysctl}}"
+
+- name: stop service elasticsearch, if running
+  systemd:
+    name: elasticsearch.service
+    state: stopped
+
+- name: configure system settings, file descriptors and number of threads
+  pam_limits:
+    domain: elasticsearch
+    limit_type: '-'
+    limit_item: nofile
+    value: 65536
+  pam_limits:
+    domain: elasticsearch
+    limit_type: '-'
+    limit_item: nproc
+    value: 65536
+  pam_limits:
+    domain: elasticsearch
+    limit_type: 'soft'
+    limit_item: memlock
+    value: unlimited
+  pam_limits:
+    domain: elasticsearch
+    limit_type: 'hard'
+    limit_item: memlock
+    value: unlimited
+    
+- name: reload settings from all system configuration files
+  shell: sysctl --system
+
+- name: upload jvm.options
+  copy:
+    src: "{{jvmOps}}"
+    dest: "{{elastic_folder}}"
+    owner: "{{user_group}}"
+    group: "{{user_group}}"
+    mode: 0640
+
+- name: upload elasticsearch.service
+  copy:
+    src: "{{elastic_service}}"
+    dest: "{{elastic_service_folder}}"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=r,o=r"
+
+- name: setup elastic node
+  template:
+    src: templates/elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: "{{user_group}}"
+    group: "{{user_group}}"
+    mode: "u=rw,g=r,o=r"
+
+- name: Ansible check file exists example.
+  stat:
+      path: /data/nodes
+  register: data_nodes
+
+- debug:
+      msg: "There are an old elastic setup"
+  when: data_nodes.stat.exists
+
+- name: delete old elastic data to start again
+  shell: rm -rf /data/nodes
+  when: data_nodes.stat.exists
+
+- name: setup data folder
+  file:
+    path: "{{data_folder}}"
+    owner: "{{user_group}}"
+    group: "{{user_group}}"
+    mode: "u=wrx,g=rx,o=rx"
+
+- name: reload daemon
+  shell: systemctl daemon-reload
+
+- name: start service
+  systemd:
+        name: elasticsearch.service
+        state: started
+
+- name: waiting to 9200 port up
+  wait_for:
+    host: localhost
+    port: 9200
+    state: started
+    delay: 30
+    timeout: 3
+  ignore_errors: yes
+
+- name: activate trial
+  shell: curl -X POST "localhost:9200/_xpack/license/start_trial?acknowledge=true"
+  ignore_errors: yes
+
+- name: setup the password of elastic to top-secret
+  shell: printf "top-secret" | /usr/share/elasticsearch/bin/elasticsearch-keystore -v add "bootstrap.password" -x
+  ignore_errors: yes
+
+- name: restart the elastic service to apply the password
+  systemd:
+        name: elasticsearch.service
+        state: restarted
+
+- name: Ensure kibana is installed
+  package:
+    name: "kibana"
+    state: present
+
+- name: create cert folder
+  file:
+    path: "{{kibana_folder}}/certs"
+    state: directory
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: "u=rwx,g=rsx,o=r"
+
+- name: create log folder
+  file:
+    path: "/var/log/kibana"
+    state: directory
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: "u=rwx,g=rsx,o=r"
+
+- name: setup kibana node
+  template:
+    src: templates/kibana.yml.j2
+    dest: "{{kibana_folder}}/kibana.yml"
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: "u=rw,g=r,o=r"
+
+- name: upload pem
+  copy:
+    src: "{{pem}}"
+    dest: "{{kibana_folder}}/certs/"
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: 0600
+
+- name: upload key
+  copy:
+    src: "{{key}}"
+    dest: "{{kibana_folder}}/certs/"
+    owner: "{{kibana}}"
+    group: "{{kibana}}"
+    mode: 0600
+
+- name: start and enable kibana service
+  service: name=kibana enabled=yes state=started

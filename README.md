@@ -106,3 +106,9 @@ You can use the Ansible playbooks to turn down your machines by running the
 following:
 
     ansible-playbook -i hosts lab.yml -e state=absent
+
+# Keystore of elastic:
+
+printf "top-secret" | /usr/share/elasticsearch/bin/elasticsearch-keystore -v add "bootstrap.password" -x 
+
+and restart the node

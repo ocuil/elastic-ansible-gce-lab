@@ -1,0 +1,20 @@
+- name: Check FS (first time)
+  shell: mount | grep {{ device }}
+  ignore_errors: yes
+  register: fs_mounted
+  args:
+    warn: false
+
+- name: Create XFS filesystem on data device
+  filesystem: fstype=xfs dev={{ device }} force=yes
+  when: fs_mounted is failed
+
+- name: Mount XFS filesystem
+  mount: name={{ mount_point }} src={{ device }} fstype=xfs state=mounted
+
+- name: Check FS (second time)
+  shell: mount | grep {{ device }}
+  ignore_errors: yes
+  register: fs_mounted
+  args:
+      warn: false

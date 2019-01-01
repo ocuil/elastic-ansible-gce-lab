@@ -1,0 +1,2 @@
+yum_repos_d: /etc/yum.repos.d/
+elastic_repo: files/elasticsearch-6_x.repo

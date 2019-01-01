@@ -4,32 +4,64 @@
   connection: local
   vars:
     state: active
-    machine_type: n1-standard-1
+    machine_type: n1-standard-4
+    esmonit_host:
+      - esmonit01
     elastic_hosts:
       - elastic01
-#      - elastic02
-#      - elastic03
+      - elastic02
+      - elastic03
     kibana_host:
       - kibana01
     logstash_hosts:
       - logstash01
-#      - logstash02
+      - logstash02
     zookeeper_hosts:
       - zookeeper01
-#      - zookeeper02
-#      - zookeeper03
+      - zookeeper02
+      - zookeeper03
     kafka_hosts:
       - kafka01
- #     - kafka02
- #     - kafka03
+      - kafka02
+      - kafka03
     beat_hosts:
       - beat01
     elk_disk_type: pd-ssd
     elk_disk_size: 500
+    monit_disk_type: pd-ssd
+    monit_disk_size: 20
 
     zone: europe-west1
 
   tasks:
+#####################
+# ESMONIT
+#####################
+    - name: Launch esmonit instances
+      gce:
+          instance_names: "{{ esmonit_host|join(',') }}"
+          machine_type: "{{ machine_type }}"
+          image: centos-7
+          tags: esmonit
+          zone: "{{ zone }}-b"
+          state: "{{ state }}"
+      register: gce
+
+    - name: Add esmonit hosts to esmonit group
+      add_host: hostname={{ item.public_ip }} groupname=esmonit
+      with_items: "{{gce.instance_data | default({})}}"
+
+    - name: Create monit disks
+      gce_pd:
+          name: "{{ item }}-data"
+          instance_name: "{{ item }}"
+          size_gb: "{{ monit_disk_size }}"
+          disk_type: "{{ monit_disk_type }}"
+          zone: "{{ zone }}-b"
+          mode: READ_WRITE
+          state: "{{ state }}"
+      with_items: "{{esmonit_host}}"
+
 ####################
 # ELASTICSEARCH NODES
 ####################
@@ -58,27 +90,34 @@
           state: "{{ state }}"
       with_items: "{{elastic_hosts}}"
 
-    - name: Wait for SSH to come up on elastic cluster
-      wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
-      with_items: "{{gce.instance_data | default({})}}"
-      when: gce.instance_data is defined
-
 # ####################
 # # KIBANA NODES
 # ####################
-#     - name: Launch kibana instances
-#       gce:
-#           instance_names: "{{ kibana_host|join(',') }}"
-#           machine_type: "{{ machine_type }}"
-#           image: centos-7
-#           tags: kibana
-#           zone: "{{ zone }}-b"
-#           state: "{{ state }}"
-#       register: gce
+    - name: Launch kibana instances
+      gce:
+          instance_names: "{{ kibana_host|join(',') }}"
+          machine_type: "{{ machine_type }}"
+          image: centos-7
+          tags: kibana
+          zone: "{{ zone }}-b"
+          state: "{{ state }}"
+      register: gce
 
-#     - name: Add kibana hosts to kibana group
-#       add_host: hostname={{ item.public_ip }} groupname=kibana
-#       with_items: "{{gce.instance_data | default({})}}"
+    - name: Add kibana hosts to kibana group
+      add_host: hostname={{ item.public_ip }} groupname=kibana
+      with_items: "{{gce.instance_data | default({})}}"
+    
+    - name: Create monit disks
+      gce_pd:
+          name: "{{ item }}-data"
+          instance_name: "{{ item }}"
+          size_gb: "{{ monit_disk_size }}"
+          disk_type: "{{ monit_disk_type }}"
+          zone: "{{ zone }}-b"
+          mode: READ_WRITE
+          state: "{{ state }}"
+      with_items: "{{kibana_host}}"
+
 # ####################
 # # LOGSTASH NODES
 # ####################
@@ -146,6 +185,22 @@
 # ####################
 # ####################
 
+    - name: Wait for SSH to come up on elastic cluster
+      wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
+      with_items: "{{gce.instance_data | default({})}}"
+      when: gce.instance_data is defined
+
+      
+####################
+# MONIT NODES
+####################
+- name: Setup monit instance(s)
+  hosts: esmonit
+  become: true
+  roles:
+    - common
+    - data_storage
+    - esmonit
 
 ####################
 # ELASTICSEARCH NODES
@@ -153,18 +208,19 @@
 - name: Setup elasticsearch instance(s)
   hosts: elastic
   become: true
-  vars:
-    sysctl:
-    - name: vm.dirty_ratio
-      value: 5
-    - name: vm.dirty_background_ratio
-      value: 2
-    - name: vm.swappiness
-      value: 1
-    volumes:
-    - name: data
-      type: ""
-    mount_point: /data
   roles:
-    - install_dependencies
-    - install_elastic
+    - common
+    - data_storage
+    - elasticsearch
+
+####################
+# KIBANA NODES
+####################
+- name: Setup kibana instance(s)
+  hosts: kibana
+  become: true
+  roles:
+    - common
+    - data_storage
+    - elasticsearch
+    - kibana

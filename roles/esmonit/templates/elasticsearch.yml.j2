@@ -1,0 +1,19 @@
+cluster.name: {{ cluster }}
+node.name: ${HOSTNAME}
+
+path.data: {{ data_folder }}
+path.logs: /var/log/elasticsearch
+
+bootstrap.memory_lock: true
+network.host: 0.0.0.0
+
+xpack.security.enabled: true
+xpack.monitoring.enabled: true
+
+xpack.monitoring.exporters.{{ cluster }}:
+  type: http
+  host: ['http://esmonit01']
+  auth.username: elastic
+  auth.password: "top-secret"
+
+xpack.monitoring.collection.enabled: true

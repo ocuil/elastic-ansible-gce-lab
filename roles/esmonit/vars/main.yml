@@ -1,0 +1,18 @@
+sysctl:
+- name: vm.dirty_ratio
+  value: 5
+- name: vm.dirty_background_ratio
+  value: 2
+- name: vm.swappiness
+  value: 1
+data_folder: /data
+elastic_folder: /etc/elasticsearch
+user_group: elasticsearch
+cluster: esmonit01
+kibana: kibana
+kibana_folder: /etc/kibana
+pem: files/server.pem
+key: files/server.key
+jvmOps: files/jvm.options
+elastic_service: files/elasticsearch.service
+elastic_service_folder: /usr/lib/systemd/system/
